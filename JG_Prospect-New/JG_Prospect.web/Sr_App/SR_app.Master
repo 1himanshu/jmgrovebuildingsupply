@@ -379,7 +379,12 @@
                         <uc2:LeftPanel ID="LeftPanel1" runat="server" />
                         <br />
                         <ul class="left_nav">
-                            <li><a href="javascript:window.open('http://www.fatcow.com/mail/','mywindow','width=600,height=400')" target="_blank">Email</a></li>
+                            <li id="li_VoiceMail" runat="server"><a href="#">Voice Mail / Chat </a>
+                                <ul>
+                                    <li><a href="javascript:window.open('http://www.fatcow.com/mail/','mywindow','width=600,height=400')" target="_blank">Email</a></li>
+                                </ul>
+                            </li>
+                            <%--<li><a href="javascript:window.open('http://www.fatcow.com/mail/','mywindow','width=600,height=400')" target="_blank">Email</a></li>--%>
                             <li><a href="ShowResources.aspx">Resources</a></li>
                             <li><a href="#">ADMIN </a>
                                 <ul>

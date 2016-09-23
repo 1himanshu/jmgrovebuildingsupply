@@ -246,6 +246,12 @@ $(document).ready(function () {
                     e.stopImmediatePropagation(); //stop click event, add deleted click for anchor link
                     window.top.location.href = "/Sr_App/Customer_Profile.aspx?CustomerId=" + event.customerid;
                 });
+
+                $(element).find('.fc-title').prepend('<a  href="javascript:void(0);" class="hover-link"  style="color:#fff">' + event.address + ',</a>');
+                $(element).find('.hover-link').hover(function (e) {
+                    e.stopImmediatePropagation();
+                    javascript: return parent.UpdateMap(event.address + ',' + event.zipcode);
+                });
                 //$(element).find('.fc-title').prepend('<a href="javascript:void(0);" class="delete-event-link" style="color:#fff">' + event.customerid + ',</a>');
                 element.qtip({
                     content: {

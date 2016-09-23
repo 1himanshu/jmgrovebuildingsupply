@@ -73,6 +73,140 @@
                 }
             });
         }
+
+        function UpdateMap(customerAddress) {
+            $("#list").hide();
+            // var mumbai = new google.maps.LatLng(18.9750, 72.8258);
+            var geocoder = new google.maps.Geocoder();
+            var address = customerAddress
+
+            geocoder.geocode({ 'address': address }, function (results, status) {
+                var addr_type = results[0].types[0];	// type of address inputted that was geocoded
+                if (status == google.maps.GeocoderStatus.OK)
+                    ShowLocation(results[0].geometry.location, address, addr_type);
+                else
+                    alert("Geocode was not successful for the following reason: " + status);
+            });
+        }
+
+        function UpdateTodayEventOnMap(tempEvents) {
+            debugger;
+            var bounds = new google.maps.LatLngBounds();
+            map = new google.maps.Map(document.getElementById('dvMap'), {
+                zoom: 6,
+                center: { lat: 41.85, lng: -87.65 }
+            });
+            // directionsDisplay.setMap(map);
+            var markers = [];
+            var titles = [];
+            var addresses = [];
+            var locations = [];
+            var j = 0;
+
+            if (tempEvents != null && tempEvents !== 'undefined' && tempEvents.length > 0) {
+                for (i = 0; i < tempEvents.length; i++) {
+
+                    var tempArr = tempEvents[i].split("||");
+                    var addressArr = tempArr[3].split(":");
+                    var markerAddress = addressArr[1];
+                    addresses.push(markerAddress);
+                }
+
+                var geocoder = new google.maps.Geocoder();
+                var processed = 0;
+                $.each(addresses, function (i, v) {
+                    geocoder.geocode({ 'address': v }, function (results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                            locations[i] = results[0].geometry.location;
+                        }
+                        if (++processed >= locations.length) {
+                            var marker = new google.maps.Marker({
+                                position: locations[i],
+                                map: map,
+                                title: v
+                            });
+                            markers.push(marker);
+                            bounds.extend(locations[i]);
+                        }
+
+                        if (processed == addresses.length) {
+                            $("#list").show();
+                            map.fitBounds(bounds);
+                            $(markers).each(function (j, marker) {
+                                var contentString = "<b>" + addresses[j] + "</b>";
+                                var infowindow = new google.maps.InfoWindow({ content: contentString });
+                                $("<li />")
+                                    .html(addresses[j])
+                                    .click(function () {
+                                        displayPoint(marker, i);
+                                    })
+                                    .appendTo("#list");
+                                google.maps.event.addListener(marker, "click", function () {
+                                    infowindow.open(map, marker);
+                                    displayPoint(marker, i);
+                                });
+                            });
+                        }
+
+                    });
+
+                });
+
+                function displayPoint(marker, index) {
+                    var latLng = new google.maps.LatLng(marker.position.lat(), marker.position.lng());
+
+                    $("#message").hide();
+
+                    var moveEnd = google.maps.event.addListener(map, "moveend", function () {
+                        var markerOffset = map.fromLatLngToDivPixel(marker.getLatLng());
+                        $("#message")
+							.fadeIn()
+							.css({ top: markerOffset.y, left: markerOffset.x });
+                        google.maps.event.removeListener(moveEnd);
+                    });
+                    map.panTo(latLng);
+                }
+
+            }
+
+        }
+
+        function ShowLocation(latlng, address, addr_type) {
+
+            // Center the map at the specified location
+            var philadelphia = new google.maps.LatLng(39.9526, 75.1652);
+            var mapOptions = {
+                zoom: 7,
+                center: philadelphia
+            };
+            map = new google.maps.Map(document.getElementById('dvMap'), mapOptions);
+            map.setCenter(latlng);
+
+            // Set the zoom level according to the address level of detail the user specified
+            var zoom = 12;
+            switch (addr_type) {
+                case "administrative_area_level_1": zoom = 6; break;		// user specified a state
+                case "locality": zoom = 10; break;		// user specified a city/town
+                case "street_address": zoom = 15; break;		// user specified a street address
+            }
+            map.setZoom(zoom);
+
+            // Place a Google Marker at the same location as the map center 
+            // When you hover over the marker, it will display the title
+            var marker = new google.maps.Marker({
+                position: latlng,
+                map: map,
+                title: address
+            });
+
+            // Create an InfoWindow for the marker
+            var contentString = "<b>" + address + "</b>";	// HTML text to display in the InfoWindow
+            var infowindow = new google.maps.InfoWindow({ content: contentString });
+
+            //Set event to display the InfoWindow anchored to the marker when the marker is clicked.
+            google.maps.event.addListener(marker, 'click', function () { infowindow.open(map, marker); });
+        }
+
     </script>
     <link href="datetime/css/jquery-ui-1.7.1.custom.css" rel="stylesheet" type="text/css" />
 
@@ -320,6 +454,8 @@
 
             });
 
+            GetCurrentDateEvents();
+
         });
 
         function ClearCustomerCheckBox() {
@@ -344,6 +480,22 @@
             $("#iframeSalesCalender").attr("src", "SalesCalender.aspx?e=" + JSON.stringify(customers) + "&s=" + txtSearch + "&d=" + date);
 
             date = '';
+        }
+
+        function GetCurrentDateEvents() {
+            $.ajax({
+                type: "POST",
+                url: "Calender.aspx/GetCurrentDateEvents",
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                data: "{}",
+
+                success: function (data) {
+                    debugger;
+                    var dataInput = (data.d);
+                    UpdateTodayEventOnMap(dataInput);
+                }
+            });
         }
 
     </script>

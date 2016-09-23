@@ -85,6 +85,15 @@ namespace JG_Prospect.Sr_App {
         protected global::JG_Prospect.Sr_App.LeftPanel LeftPanel1;
         
         /// <summary>
+        /// li_VoiceMail control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl li_VoiceMail;
+        
+        /// <summary>
         /// li_addresources control.
         /// </summary>
         /// <remarks>

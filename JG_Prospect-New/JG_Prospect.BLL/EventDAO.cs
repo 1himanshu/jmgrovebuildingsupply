@@ -247,6 +247,83 @@ namespace JG_Prospect.JGCalender
 
             return key;
         }
+
+        //this method retrieves all events of current date
+        public static List<CalendarEvent> getTodayEvents()
+        {
+            DateTime start = DateTime.Today;
+            DateTime end = start.AddDays(1);
+            List<CalendarEvent> events = new List<CalendarEvent>();
+            SqlConnection con = new SqlConnection(connectionString);
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("  SELECT f.Id as event_id,   ");
+            sb.Append("  isnull((Cast( c.id as varchar(10)) +' ## Last Name: '+ c.LastName+' ## First Name: '+ c.CustomerName+'  ## Contact: '+ ISNULL(c.PrimaryContact,'')+' ## Address: '   ");
+            sb.Append("  + c.CustomerAddress+' ## Zip: '+ c.ZipCode+' ## Status: '+ f.MeetingStatus+ ' ## Product ' +cast( isnull(p.ProductName,'')  as varchar(10))),'') as  description,  ");
+            sb.Append("  isnull(( c.CustomerName+'  ## '+ISNULL(c.PrimaryContact,'')+' ##  '   ");
+            sb.Append("  + c.CustomerAddress+' ## Product ' +cast( isnull(p.ProductName,'')  as varchar(10))),'') as  title,  ");
+
+            sb.Append("  isnull(( c.CustomerAddress +'##' + c.ZipCode ),'') as  FullAddress,  ");
+            //sb.Append("  + c.State + '##' +  c.ZipCode),'') as  FullAddress,  ");
+
+
+            sb.Append("  MeetingDate as  event_start,  ");
+            sb.Append("  DATEADD(hour,1,MeetingDate) as event_end,   ");
+            sb.Append("  0 as all_day,   ");
+
+            sb.Append("  f.MeetingStatus  as status,c.id, c.lastname,c.CustomerName AS firstname, ISNULL(c.PrimaryContact,'') AS PrimaryContact, c.CustomerAddress,c.ZipCode  , isnull(p.ProductName,'') as ProductName  ");
+            sb.Append("  FROM tblcustomer_followup f   ");
+            sb.Append("  left join new_customer c on c.id=f.CustomerId   ");
+            sb.Append("  left join tblProductMaster p on p.ProductId=f.ProductId   ");
+            sb.Append(" where f.MeetingDate > @start   and  f.MeetingDate < @end ");
+
+
+            SqlCommand cmd = new SqlCommand(sb.ToString(), con);
+
+            cmd.Parameters.Add("@start", SqlDbType.DateTime).Value = start;
+            cmd.Parameters.Add("@end", SqlDbType.DateTime).Value = end;
+            DataTable dt = new DataTable();
+            using (con)
+            {
+                con.Open();
+                SqlDataAdapter adp = new SqlDataAdapter(cmd);
+                adp.Fill(dt);
+            }
+
+            foreach (DataRow reader in dt.Rows)
+            {
+
+                CalendarEvent cevent = new CalendarEvent();
+                if (reader["status"].ToString() == "est<$1000" || reader["status"].ToString() == "est>$1000")
+                {
+                    cevent.backgroundColor = "black";
+                }
+                else if (reader["status"].ToString() == "sold>$1000" || reader["status"].ToString() == "sold<$1000" || reader["status"].ToString() == "Closed (sold)")
+                {
+                    cevent.backgroundColor = "red";
+                }
+                else
+                {
+                    cevent.backgroundColor = "gray";
+                }
+                cevent.id = (int)reader["event_id"];
+                cevent.title = ((string)reader["title"]).Replace("##", ", "); ;
+                cevent.description = ((string)reader["description"]).Replace("##", "<br>");
+                cevent.start = (DateTime)reader["event_start"];
+                cevent.end = (DateTime)reader["event_end"];
+                cevent.allDay = Convert.ToBoolean(reader["all_day"]);
+                cevent.status = reader["status"].ToString();
+                cevent.customerid = Convert.ToInt32(reader["id"]);
+                cevent.lastname = reader["lastname"].ToString();
+                cevent.primarycontact = reader["PrimaryContact"].ToString();
+                cevent.address = ((string)reader["FullAddress"]).Replace("##", ", "); ;
+                cevent.zipcode = reader["zipcode"].ToString();
+                cevent.productline = reader["productname"].ToString();
+                cevent.firstname = reader["firstname"].ToString();
+                events.Add(cevent);
+            }
+            return events;
+        }
     }
 
 
